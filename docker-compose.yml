@@ -1,0 +1,123 @@
+version: '3.7'
+
+services:
+    zookeeper:
+        image: confluentinc/cp-zookeeper:latest
+        hostname: zookeeper
+        container_name: zookeeper
+        ports:
+          - "2181:2181"
+        environment:
+          ZOOKEEPER_CLIENT_PORT: 2181
+          ZOOKEEPER_TICK_TIME: 2000
+        networks:
+          - my_network
+
+    kafka:
+        image: confluentinc/cp-server:latest
+        container_name: kafka
+        hostname: kafka
+        ports:
+          - "9092:9092"
+          - "9997:9997"
+        environment:
+          KAFKA_BROKER_ID: 1
+          KAFKA_ZOOKEEPER_CONNECT: 'zookeeper:2181'
+          KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+          KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
+          KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+          KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+          KAFKA_CONFLUENT_LICENSE_TOPIC_REPLICATION_FACTOR: 1
+          KAFKA_CONFLUENT_BALANCER_TOPIC_REPLICATION_FACTOR: 1
+          KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+          KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+          KAFKA_JMX_PORT: 9997
+          KAFKA_JMX_HOSTNAME: kafka
+        depends_on:
+          - zookeeper
+        networks:
+          - my_network
+
+    kafka-ui:
+      container_name: kafka-ui
+      image: provectuslabs/kafka-ui:latest
+      ports:
+        - 8082:8080
+      environment:
+        DYNAMIC_CONFIG_ENABLED: true
+      networks:
+        - my_network
+
+    spark-master:
+      image: bitnami/spark:latest
+      container_name: spark-master
+      hostname: spark-master
+      environment:
+        - SPARK_MODE=master
+        - SPARK_MASTER_HOST=spark-master
+        - SPARK_MASTER_PORT=7077
+      ports:
+        - "7077:7077"
+        - "8080:8080"  # Порт веб-интерфейса Spark Master
+      volumes:
+        - spark-master-logs:/opt/bitnami/spark/logs
+      networks:
+        - my_network
+
+    spark-worker-1:
+      image: bitnami/spark:latest
+      environment:
+        - SPARK_MODE=worker
+        - SPARK_MASTER_URL=spark://spark-master:7077
+        - SPARK_WORKER_CORES=2
+        - SPARK_WORKER_MEMORY=2g
+      ports:
+        - "8081:8081"  # Порт веб-интерфейса Spark Worker
+      volumes:
+        - spark-worker-logs:/opt/bitnami/spark/logs
+      depends_on:
+        - spark-master
+      networks:
+        - my_network
+
+    spark-worker-2:
+      image: bitnami/spark:latest
+      environment:
+        - SPARK_MODE=worker
+        - SPARK_MASTER_URL=spark://spark-master:7077
+        - SPARK_WORKER_CORES=2
+        - SPARK_WORKER_MEMORY=2g
+      ports:
+        - "8083:8083"  # Порт веб-интерфейса Spark Worker
+      volumes:
+        - spark-worker-logs:/opt/bitnami/spark/logs
+      depends_on:
+        - spark-master
+      networks:
+        - my_network
+
+    cassandra:
+      image: bitnami/cassandra:latest
+      container_name: cassandra
+      hostname: cassandra
+      ports:
+        - 9042:9042
+      environment:
+        - MAX_HEAP_SIZE=512M
+        - HEAP_NEWSIZE=100M
+        - CASSANDRA_USERNAME=cassandra
+        - CASSANDRA_PASSWORD=cassandra
+      volumes:
+        - ./:/home
+        - cassandra-data:/var/lib/cassandra
+      networks:
+        - my_network
+
+volumes:
+  spark-master-logs:
+  spark-worker-logs:
+  cassandra-data:
+
+networks:
+  my_network:
+    driver: bridge
