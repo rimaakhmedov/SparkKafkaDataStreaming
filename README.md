@@ -7,6 +7,10 @@
 docker-compose -f docker-compose-LocalExecutor.yml up -d 
 ```
 ## Apache Kafka
+Для запуска остальных инструментов:
+```
+docker-compose up -d 
+```
 По адресу localhost:8082 в Kafka UI создайте кластер и топик users.
 Для отправки данных в топик users, запустите stream_dag в Airflow по адресу localhost:8080.
 ## Apache Spark
