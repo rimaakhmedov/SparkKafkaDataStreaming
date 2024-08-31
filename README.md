@@ -3,15 +3,21 @@
 
 ## Apache Airflow
 Для запуска Airflow, выполните команду:
-```docker-compose -f docker-compose-LocalExecutor.yml up -d ```
+```
+docker-compose -f docker-compose-LocalExecutor.yml up -d 
+```
 ## Apache Kafka
 По адресу localhost:8082 в Kafka UI создайте кластер и топик users.
 Для отправки данных в топик users, запустите stream_dag в Airflow по адресу localhost:8080.
 ## Apache Spark
 Для отпраки данных в Cassandra с помощью Spark, сначала копируем spark_stream.py в контейнер:
-```docker cp spark_stream.py spark-master:/opt/bitnami/spark/ ```
+```
+docker cp spark_stream.py spark-master:/opt/bitnami/spark/
+```
 Далее нужно будет скачать jar файлы в jars директории:
-```docker exec -it spark-master /bin/bash ```
+```
+docker exec -it spark-master /bin/bash
+```
 ```cd jars
 curl -O https://repo1.maven.org/maven2/com/datastax/spark/spark-cassandra-connector-assembly_2.12/3.5.0/spark-cassandra-connector-assembly_2.12-3.5.0.jar
 curl -O https://repo1.maven.org/maven2/org/apache/spark/spark-sql-kafka-0-10_2.12/3.5.2/spark-sql-kafka-0-10_2.12-3.5.2.jar
